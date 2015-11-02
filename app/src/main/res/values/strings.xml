@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Checker</string>
+
+    <string name="title">CHECKER</string>
+    <string name="exploreButton">EX</string>
+    <string name="checkButton">Check!</string>
+    <string name="action_settings">Settings</string>
+</resources>
