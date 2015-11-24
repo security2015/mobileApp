@@ -13,6 +13,7 @@
         android:layout_centerHorizontal="true"
         android:textStyle="bold"
         android:textColor="@color/abc_primary_text_material_light"
+        android:typeface="sans"
         android:id="@+id/titleText" />
 
     <!--<EditText
@@ -27,9 +28,9 @@
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />-->
     <TextView
+        android:id="@+id/textViewFileName"
         android:layout_width="300dp"
         android:layout_height="40dp"
-        android:id="@+id/fileName"
         android:inputType="textAutoComplete"
         android:hint="input filename here"
         android:paddingLeft="20dp"
@@ -40,17 +41,25 @@
         android:layout_centerHorizontal="true"
         android:singleLine="true"
         android:textAlignment="center"
-        android:background="@drawable/lineseperator"
          />
+    <ImageView
+        android:id="@+id/prettyLine"
+        android:layout_below="@+id/textViewFileName"
+        android:background="@drawable/lineseperator"
+        android:layout_width="fill_parent"
+        android:layout_height="10dp"
+        android:layout_weight="2"
+        >
+    </ImageView>
 
     <ImageButton
         android:background="@drawable/search_icon"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:text="@string/exploreButton"
-        android:id="@+id/button"
+        android:id="@+id/exploreButton"
         android:onClick="openExplorer"
-        android:layout_below="@+id/fileName"
+        android:layout_below="@+id/prettyLine"
         android:layout_centerHorizontal="true"
         />
     <Button
@@ -61,7 +70,7 @@
         android:textStyle="bold"
         android:textColor="@color/switch_thumb_normal_material_light"
         android:id="@+id/checkButton"
-        android:layout_below="@+id/button"
+        android:layout_below="@+id/exploreButton"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="37dp" />
 

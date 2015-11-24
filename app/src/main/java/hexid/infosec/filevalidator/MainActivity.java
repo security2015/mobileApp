@@ -7,18 +7,21 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
-    TextView fileName;
+    TextView textViewFileName;
+    Button buttonCheck;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 //        fileName = (EditText)findViewById(R.id.fileName);
-        fileName = (TextView)findViewById(R.id.fileName);
+        textViewFileName = (TextView)findViewById(R.id.textViewFileName);
+        buttonCheck = (Button)findViewById(R.id.checkButton);
     }
 
     @Override
@@ -40,8 +43,9 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case 1:
                 if (resultCode == RESULT_OK) {
-                    String FilePath = data.getData().getPath();
-                    fileName.setText(FilePath);
+                    String filePath = data.getData().getPath();
+                    String fileName = filePath.substring(filePath.lastIndexOf('/')+1,filePath.length());
+                    textViewFileName.setText(fileName);
                 }
                 break;
 
