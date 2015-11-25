@@ -47,7 +47,7 @@
         android:layout_below="@+id/textViewFileName"
         android:background="@drawable/lineseperator"
         android:layout_width="fill_parent"
-        android:layout_height="10dp"
+        android:layout_height="5dp"
         android:layout_weight="2"
         >
     </ImageView>
@@ -57,20 +57,20 @@
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:text="@string/exploreButton"
-        android:id="@+id/exploreButton"
+        android:id="@+id/buttonExplore"
         android:onClick="openExplorer"
         android:layout_below="@+id/prettyLine"
         android:layout_centerHorizontal="true"
         />
     <Button
+        android:id="@+id/buttonCheck"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/roundbutton"
         android:text="@string/checkButton"
         android:textStyle="bold"
         android:textColor="@color/switch_thumb_normal_material_light"
-        android:id="@+id/checkButton"
-        android:layout_below="@+id/exploreButton"
+        android:layout_below="@+id/buttonExplore"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="37dp" />
 

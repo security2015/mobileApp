@@ -12,18 +12,22 @@
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <receiver android:name=".BReceiver"
-            android:enabled="true"
-            android:exported="true" >
-            <intent-filter android:priority="500" >
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
+        <activity
+            android:name=".ResultActivity">
+        </activity>
+        <service android:name=".BService">
+            <intent-filter>
+                <action android:name="hexid.infosec.filevalidator.service"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
-        </receiver>
+        </service>
+
     </application>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"/>
 
 </manifest>
