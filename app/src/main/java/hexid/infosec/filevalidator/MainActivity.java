@@ -18,6 +18,16 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.cookie.Cookie;
+import org.apache.http.impl.client.DefaultHttpClient;
+
+import java.io.IOException;
+import java.util.List;
+
 
 /**
  *  H.E.X.I.D 2015
@@ -47,7 +57,6 @@ public class MainActivity extends BaseActivity {
                 startService(intent);
             }
         }
-
         textViewFileName = (TextView)findViewById(R.id.textViewFileName);
         buttonCheck = (Button)findViewById(R.id.buttonCheck);
         buttonCheck.setOnClickListener(new View.OnClickListener() {
@@ -82,10 +91,7 @@ public class MainActivity extends BaseActivity {
                 if (resultCode == RESULT_OK) {
                     strFilePath = data.getDataString();
                     Log.i("JB", "File selected: "+strFilePath);
-                    //if ( strFilePath.contains("file://"))
-                     //   strFilePath = data.getData().getPath();
-                   // else if (strFilePath.contains("content://"))    //Convert Mediastore type URI to Absolute path (image, sound, movie...)
-                       strFilePath = getPath(this, data.getData());
+                    strFilePath = getPath(this, data.getData());
 
                    String fileName = strFilePath.substring(strFilePath.lastIndexOf('/')+1,strFilePath.length());
                    textViewFileName.setText(fileName);
@@ -103,7 +109,6 @@ public class MainActivity extends BaseActivity {
      * https://github.com/iPaulPro/aFileChooser/blob/master/aFileChooser/src/com/ipaulpro/afilechooser/utils/FileUtils.java
      */
     public static String getPath(final Context context, final Uri uri) {
-
         if (false)
             Log.d( " File -",
                     "Authority: " + uri.getAuthority() +
@@ -114,43 +119,29 @@ public class MainActivity extends BaseActivity {
                             ", Host: " + uri.getHost() +
                             ", Segments: " + uri.getPathSegments().toString()
             );
-
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
-
-        // DocumentProvider
         if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
-            // LocalStorageProvider
             if (isLocalStorageDocument(uri)) {
-                // The path is the id
                 return DocumentsContract.getDocumentId(uri);
             }
-            // ExternalStorageProvider
             else if (isExternalStorageDocument(uri)) {
                 final String docId = DocumentsContract.getDocumentId(uri);
                 final String[] split = docId.split(":");
                 final String type = split[0];
-
                 if ("primary".equalsIgnoreCase(type)) {
                     return Environment.getExternalStorageDirectory() + "/" + split[1];
                 }
-
-                // TODO handle non-primary volumes
             }
-            // DownloadsProvider
             else if (isDownloadsDocument(uri)) {
-
                 final String id = DocumentsContract.getDocumentId(uri);
                 final Uri contentUri = ContentUris.withAppendedId(
                         Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-
                 return getDataColumn(context, contentUri, null, null);
             }
-            // MediaProvider
             else if (isMediaDocument(uri)) {
                 final String docId = DocumentsContract.getDocumentId(uri);
                 final String[] split = docId.split(":");
                 final String type = split[0];
-
                 Uri contentUri = null;
                 if ("image".equals(type)) {
                     contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
@@ -159,25 +150,18 @@ public class MainActivity extends BaseActivity {
                 } else if ("audio".equals(type)) {
                     contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
                 }
-
                 final String selection = "_id=?";
                 final String[] selectionArgs = new String[] {
                         split[1]
                 };
-
                 return getDataColumn(context, contentUri, selection, selectionArgs);
             }
         }
-        // MediaStore (and general)
         else if ("content".equalsIgnoreCase(uri.getScheme())) {
-
-            // Return the remote address
             if (isGooglePhotosUri(uri))
                 return uri.getLastPathSegment();
-
             return getDataColumn(context, uri, null, null);
         }
-        // File
         else if ("file".equalsIgnoreCase(uri.getScheme())) {
             return uri.getPath();
         }
@@ -200,7 +184,6 @@ public class MainActivity extends BaseActivity {
     }
     public static String getDataColumn(Context context, Uri uri, String selection,
                                        String[] selectionArgs) {
-
         Cursor cursor = null;
         final String column = "_data";
         final String[] projection = {

@@ -1,6 +1,5 @@
 package hexid.infosec.filevalidator;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
@@ -14,12 +13,18 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.net.Uri;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.PersistentCookieStore;
 import com.loopj.android.http.RequestParams;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.cookie.Cookie;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -28,16 +33,17 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.CookieStore;
+import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
 import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.client.CookieStore;
-import cz.msebera.android.httpclient.cookie.Cookie;
 import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 
 
@@ -84,6 +90,9 @@ public class ResultActivity extends BaseActivity {
                 byte[] unitByte;
                 url = new URL(getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL));
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+                conn.setRequestMethod("GET");
+
                 conn.setDoOutput(true);
                 conn.setChunkedStreamingMode(0);
                 conn.setRequestMethod("POST");  // Use http POST method
@@ -152,61 +161,74 @@ public class ResultActivity extends BaseActivity {
         setContentView(R.layout.activity_result);
         progressBarCheck = (ProgressBar)findViewById(R.id.progressBarCheck);
         textViewResponse = (TextView)findViewById(R.id.textViewResponse);
-        String  path = this.getIntent().getExtras().getString("filePath");
+        String path = this.getIntent().getExtras().getString("filePath");
         Log.i("Jebum", "onCreate()  file: " + path);
         if  ( path  == null )
             Toast.makeText(this, "Null path", Toast.LENGTH_SHORT).show();
         else {
-            Log.i("Jebum", "Trnasfer()  file: "+path);
+            Log.i("Jebum", "Trnasfer() file: " + path);
             progressBarCheck.setVisibility(View.VISIBLE);
 //            transfer(path);
+            client= new AsyncHttpClient();
             transfer2(path);
         }
-        buttonOK = (Button)findViewById(R.id.buttonOK);
+        buttonOK = (Button) findViewById(R.id.buttonOK);
         buttonOK.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
             }
         });
-
     }
-    /*
-    private String getCsrfFromUrl(String url) {
-        HttpGet httpGet = new HttpGet(url);
-        HttpResponse httpResponse = httpClientStatic.execute(httpGet);
-        HttpEntity httpEntity = httpResponse.getEntity();
 
-        List<Cookie> cookies = httpClientStatic.getCookieStore().getCookies();
-
-        for (Cookie cookie : cookies) {
-            if (cookie.getName().equals("csrftoken")) {
-                return cookie.getValue();
-            }
-        }
-        return null;  // Or throw exception.
-    }*/
     String csrfToken;
-    private void transfer2(String path){
+    AsyncHttpClient client;
+    private void transfer2(final String path){
         String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL);
-        AsyncHttpClient client = new AsyncHttpClient();
-        RequestParams params = new RequestParams();
-        PersistentCookieStore myCookieStore = new PersistentCookieStore(this);
-        BasicClientCookie newCookie = new BasicClientCookie("csrftoken", "JShAhinx8XCOxatTApVG2NVj2rH3xOye");
-        newCookie.setVersion(1);
-        newCookie.setDomain("checkthisfile.net");
-        newCookie.setPath("/");
-        newCookie.setAttribute("csrftoken", "JShAhinx8XCOxatTApVG2NVj2rH3xOye");
-        myCookieStore.addCookie(newCookie);
+        PersistentCookieStore myCookieStore = new PersistentCookieStore(ResultActivity.this);
         client.setCookieStore(myCookieStore);
+        client.get(serverURL, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                for (Header header : headers) {
+                    if (header.getName().equals("Set-Cookie")) {
+                        String cookieVal = header.getValue();
+                        csrfToken = cookieVal.substring(cookieVal.indexOf("csrftoken=") + 10, cookieVal.indexOf(';'));
+                        Log.e("csrfSuccess", csrfToken);
+                        transfer3(path);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                Log.e("csrfFail", error.toString());
+                Log.e("csrfFail", headers.toString());
+                Log.e("csrfFail", responseBody.toString());
+            }
+        });
+    }
+    private void transfer3(String path) {
+        String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL);
+        if ( csrfToken == null )
+            Log.e("ping","ping");
+        else
+                Log.e("ping",csrfToken);
+        RequestParams params = new RequestParams();
+        PersistentCookieStore myCookieStore = new PersistentCookieStore(ResultActivity.this);
+        //myCookieStore.clear();
+       // BasicClientCookie newCookie = new BasicClientCookie("csrftoken", csrfToken);
+     //   newCookie.setDomain("checkthisfile.net");
+     //   newCookie.setPath("/");
+     //   myCookieStore.addCookie(newCookie);
+        client.setCookieStore(myCookieStore);
+        client.addHeader("X-CSRFTOKEN", csrfToken);
         File file = null;
         try {
             file = new File(path);
-            params.put("csrfmiddlewaretoken","JShAhinx8XCOxatTApVG2NVj2rH3xOye");
-            params.put("X-CSRFTOKEN", "J22Ahinx8XCOxatTApVG2NVj2rH3xOye");
+            params.put("csrfmiddlewaretoken",csrfToken);
             params.put("docfile", file);
-            //URL url = new URL(getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL));
-            client.post(getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL), params, new AsyncHttpResponseHandler() {
+            client.post(serverURL, params, new AsyncHttpResponseHandler() {
                 @Override
                 public void onStart() {
                     super.onStart();
@@ -214,25 +236,27 @@ public class ResultActivity extends BaseActivity {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                     Toast.makeText(ResultActivity.this, "success", Toast.LENGTH_SHORT).show();
+                    for ( Header header: headers )
+                        Log.i("csrfSuccess:header", header.getValue());
+                    Log.i("csrfSuccess",  new String(responseBody));
                     progressBarCheck.setVisibility(View.GONE);
-                    Log.i("info", new String(responseBody));
                 }
                 @Override
                 public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                     Toast.makeText(ResultActivity.this, "fail", Toast.LENGTH_SHORT).show();
+                    Log.e("csrfFail", error.toString()+statusCode);
+                    for ( Header header: headers )
+                        Log.i("csrfFail:header", header.getName());
+                    Log.e("csrfFail:body", new String(responseBody));
                     progressBarCheck.setVisibility(View.GONE);
-                    Log.e("jj", error.toString());
-                    Log.e("jj", headers.toString());
-                    Log.e("jj", responseBody.toString());
                 }
             });
-        } catch(FileNotFoundException e){
+        } catch(FileNotFoundException e) {
             Log.e("error", e.toString());
             Toast.makeText(ResultActivity.this, "file not found", Toast.LENGTH_SHORT).show();
-        } //catch (MalformedURLException e) {
-           // e.printStackTrace();
-       // }
+        }
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
