@@ -1,14 +1,15 @@
 package hexid.infosec.filevalidator;
 
-import android.app.DownloadManager;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.FileObserver;
 import android.os.IBinder;
+import android.support.v7.app.NotificationCompat.Builder;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -21,6 +22,8 @@ public class BService extends Service {
     /**
      *  FileObserver: Code Snippet from http://dev.re.kr/m/post/62
      */
+
+    //ArrayList<> listFileDownloadFolder =
     public static final ArrayList<TestFileObserver> sListFileObserver = new ArrayList<TestFileObserver>();
     static class TestFileObserver extends FileObserver {
         private String mPath;
@@ -29,7 +32,6 @@ public class BService extends Service {
                 FileObserver.DELETE, FileObserver.DELETE_SELF,FileObserver.MODIFY,FileObserver.MOVED_FROM,FileObserver.MOVED_TO, FileObserver.MOVE_SELF,FileObserver.OPEN};
         String[] eventName = new String[] {"ACCESS", "ALL_EVENTS", "ATTRIB", "CLOSE_NOWRITE", "CLOSE_WRITE", "CREATE",
                 "DELETE", "DELETE_SELF" , "MODIFY" , "MOVED_FROM" ,"MOVED_TO", "MOVE_SELF","OPEN"};
-
 
         public TestFileObserver(String path) {
             super(path);
@@ -57,6 +59,8 @@ public class BService extends Service {
             }
             strEvents.append("\tPath : ").append(path).append('(').append(mPath).append(')');
             Log.i("TestFileObserver",strEvents.toString());
+            if (  event ==  FileObserver.CREATE )
+                ;
         }
     }
     private void monitorAllFiles(File root) {
@@ -77,31 +81,60 @@ public class BService extends Service {
             if(file.isDirectory()) monitorAllFiles(file);
         }
     }
-    BroadcastReceiver mybroadcast;
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        monitorAllFiles(new File(Environment.getExternalStorageDirectory()+"/Download"));
 
-        // BroadcastReciever start
-        Toast.makeText(this, "Service On", Toast.LENGTH_SHORT).show();
-        mybroadcast = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                // TODO Auto-generated method stub
-                Log.i("[BroadcastReceiver]", "MyReceiver " + intent.getAction());
-                if ( intent.getAction().equals(DownloadManager.ACTION_DOWNLOAD_COMPLETE) )
-                    Toast.makeText(context, "Downloaded", Toast.LENGTH_LONG).show();
-                if ( intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED) )
-                    Toast.makeText(context, "Booted", Toast.LENGTH_LONG).show();
-            }
-        };
-        registerReceiver(mybroadcast, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-        registerReceiver(mybroadcast, new IntentFilter(DownloadManager.ACTION_NOTIFICATION_CLICKED));
-        registerReceiver(mybroadcast, new IntentFilter(Intent.ACTION_BOOT_COMPLETED));
-        registerReceiver(mybroadcast, new IntentFilter(Intent.ACTION_SCREEN_OFF));
-        return super.onStartCommand(intent, flags, startId);
+    private void downloadObserved ()  {
+        Builder mBuilder =
+                (Builder) new Builder(this)
+                        .setSmallIcon(R.drawable.search_icon)
+                        .setContentTitle("CheckEr")
+                        .setContentText("File Downloaded");
+        Intent resultIntent = new Intent(this, MainActivity.class);
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addParentStack(ResultActivity.class);
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        mBuilder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(1, mBuilder.build());
+        Toast.makeText(this, "Monitoring On", Toast.LENGTH_SHORT).show();
     }
 
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String downloadPath = Environment.getExternalStorageDirectory()+"/Download";
+        // Monitoring file chage
+        monitorAllFiles(new File(Environment.getExternalStorageDirectory() + "/Download"));
+
+        Builder mBuilder =
+                (Builder) new Builder(this)
+                        .setSmallIcon(R.drawable.search_icon)
+                        .setContentTitle("CheckEr")
+                        .setContentText("Monitoring");
+        Intent resultIntent = new Intent(this, MainActivity.class);
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addParentStack(ResultActivity.class);
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        mBuilder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(1, mBuilder.build());
+        Toast.makeText(this, "Monitoring On", Toast.LENGTH_SHORT).show();
+
+        return super.onStartCommand(intent, flags, startId);
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -110,10 +143,8 @@ public class BService extends Service {
 
     @Override
     public void onDestroy() {
-
-        unregisterReceiver(mybroadcast);
-        // BroadcastReciever stop
-        Toast.makeText(this, "Service Off", Toast.LENGTH_SHORT).show();
+        stopMonitoring(new File(Environment.getExternalStorageDirectory()+"/Download"));
+        Toast.makeText(this, "Monitoring Off", Toast.LENGTH_SHORT).show();
         super.onDestroy();
     }
 }

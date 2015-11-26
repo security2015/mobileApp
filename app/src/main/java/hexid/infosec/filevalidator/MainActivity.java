@@ -1,35 +1,38 @@
 package hexid.infosec.filevalidator;
 
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import android.os.Environment;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.webkit.DownloadListener;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 /**
  *  H.E.X.I.D 2015
  */
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
     private String strFilePath;
     TextView textViewFileName;
     Button buttonCheck;
-    final static String TargetURL = "http://61.72.174.90/andTest";
+    final static String TargetURL = "http://61.72.174.90";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
         // Sever address initialize
         SharedPreferences pref = getSharedPreferences("preference", MODE_PRIVATE);
         if ( !pref.contains("serverAddress") ){
@@ -45,8 +48,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         textViewFileName = (TextView)findViewById(R.id.textViewFileName);
         buttonCheck = (Button)findViewById(R.id.buttonCheck);
         buttonCheck.setOnClickListener(new View.OnClickListener() {
@@ -57,26 +58,19 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
     public void check() {
+        if ( strFilePath == null ) {
+            Toast.makeText(this, "Pick file to check", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Intent intent = new Intent(this, ResultActivity.class);
         intent.putExtra("filePath", strFilePath);
-        startActivity(intent);
+        startActivityForResult(intent, 1);
     }
     public void openExplorer(View arg0){
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("file/*");
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
         startActivityForResult(intent, 1);
     }
 
@@ -86,54 +80,146 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case 1:
                 if (resultCode == RESULT_OK) {
-                    strFilePath = data.getData().getPath();
-                    Log.i("path", strFilePath);
-                    String fileName = strFilePath.substring(strFilePath.lastIndexOf('/')+1,strFilePath.length());
-                    textViewFileName.setText(fileName);
+                    strFilePath = data.getDataString();
+                    Log.i("JB", "File selected: "+strFilePath);
+                    //if ( strFilePath.contains("file://"))
+                     //   strFilePath = data.getData().getPath();
+                   // else if (strFilePath.contains("content://"))    //Convert Mediastore type URI to Absolute path (image, sound, movie...)
+                       strFilePath = getPath(this, data.getData());
+
+                   String fileName = strFilePath.substring(strFilePath.lastIndexOf('/')+1,strFilePath.length());
+                   textViewFileName.setText(fileName);
                 }
                 break;
         }
     }
-
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        else if ( id == R.id.action_server ) {
-            SharedPreferences pref = getSharedPreferences("preference", MODE_PRIVATE);
-            SharedPreferences.Editor editor = pref.edit();
-            editor.putString("serverAddress", TargetURL);
-            editor.commit();
-            return true;
-        }
-        else if ( id == R.id.action_service ) {
-            SharedPreferences pref = getSharedPreferences("preference", MODE_PRIVATE);
-            SharedPreferences.Editor editor = pref.edit();
-            if (item.isChecked()) {
-                item.setChecked(false);
-                editor.putBoolean("monitoring", false);
-                editor.commit();
-                //  Destroy service
-                Intent intent = new Intent(this, BService.class);
-                stopService(intent);
-                return false;
-            } else {
-                item.setChecked(true);
-                editor.putBoolean("monitoring", true);
-                editor.commit();
-                // Start service
-                Intent intent = new Intent(this, BService.class);
-                startService(intent);
-                return false;
+    /**
+     * Get absolute path from Android Uri
+     * https://github.com/iPaulPro/aFileChooser/blob/master/aFileChooser/src/com/ipaulpro/afilechooser/utils/FileUtils.java
+     */
+    public static String getPath(final Context context, final Uri uri) {
+
+        if (false)
+            Log.d( " File -",
+                    "Authority: " + uri.getAuthority() +
+                            ", Fragment: " + uri.getFragment() +
+                            ", Port: " + uri.getPort() +
+                            ", Query: " + uri.getQuery() +
+                            ", Scheme: " + uri.getScheme() +
+                            ", Host: " + uri.getHost() +
+                            ", Segments: " + uri.getPathSegments().toString()
+            );
+
+        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+
+        // DocumentProvider
+        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+            // LocalStorageProvider
+            if (isLocalStorageDocument(uri)) {
+                // The path is the id
+                return DocumentsContract.getDocumentId(uri);
+            }
+            // ExternalStorageProvider
+            else if (isExternalStorageDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                if ("primary".equalsIgnoreCase(type)) {
+                    return Environment.getExternalStorageDirectory() + "/" + split[1];
+                }
+
+                // TODO handle non-primary volumes
+            }
+            // DownloadsProvider
+            else if (isDownloadsDocument(uri)) {
+
+                final String id = DocumentsContract.getDocumentId(uri);
+                final Uri contentUri = ContentUris.withAppendedId(
+                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+
+                return getDataColumn(context, contentUri, null, null);
+            }
+            // MediaProvider
+            else if (isMediaDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                Uri contentUri = null;
+                if ("image".equals(type)) {
+                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                } else if ("video".equals(type)) {
+                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                } else if ("audio".equals(type)) {
+                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                }
+
+                final String selection = "_id=?";
+                final String[] selectionArgs = new String[] {
+                        split[1]
+                };
+
+                return getDataColumn(context, contentUri, selection, selectionArgs);
             }
         }
-        return super.onOptionsItemSelected(item);
+        // MediaStore (and general)
+        else if ("content".equalsIgnoreCase(uri.getScheme())) {
+
+            // Return the remote address
+            if (isGooglePhotosUri(uri))
+                return uri.getLastPathSegment();
+
+            return getDataColumn(context, uri, null, null);
+        }
+        // File
+        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+        return null;
+    }
+    public static boolean isLocalStorageDocument(Uri uri) {
+        return false;
+    }
+    public static boolean isExternalStorageDocument(Uri uri) {
+        return "com.android.externalstorage.documents".equals(uri.getAuthority());
+    }
+    public static boolean isDownloadsDocument(Uri uri) {
+        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+    }
+    public static boolean isMediaDocument(Uri uri) {
+        return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+    public static boolean isGooglePhotosUri(Uri uri) {
+        return "com.google.android.apps.photos.content".equals(uri.getAuthority());
+    }
+    public static String getDataColumn(Context context, Uri uri, String selection,
+                                       String[] selectionArgs) {
+
+        Cursor cursor = null;
+        final String column = "_data";
+        final String[] projection = {
+                column
+        };
+        try {
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
+                    null);
+            if (cursor != null && cursor.moveToFirst()) {
+                if (false)
+                    DatabaseUtils.dumpCursor(cursor);
+
+                final int column_index = cursor.getColumnIndexOrThrow(column);
+                return cursor.getString(column_index);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
     }
 }

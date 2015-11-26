@@ -6,9 +6,9 @@
 
     <item android:id="@+id/action_server" android:title="Server address"
         android:orderInCategory="100" app:showAsAction="never" />
-    <item android:id="@+id/action_service"
+    <item android:id="@+id/action_monitoring"
         android:checkable="true"
-        android:title="Service" />
+        android:title="Monitoring" />
     <item android:id="@+id/blue"
         android:title="blue"
         android:showAsAction="always"/>
