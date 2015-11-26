@@ -53,14 +53,15 @@
     </ImageView>
 
     <ImageButton
+        android:id="@+id/buttonExplore"
         android:background="@drawable/search_icon"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:text="@string/exploreButton"
-        android:id="@+id/buttonExplore"
         android:onClick="openExplorer"
         android:layout_below="@+id/prettyLine"
         android:layout_centerHorizontal="true"
+        android:layout_marginTop="10sp"
         />
     <Button
         android:id="@+id/buttonCheck"
@@ -72,6 +73,6 @@
         android:textColor="@color/switch_thumb_normal_material_light"
         android:layout_below="@+id/buttonExplore"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="37dp" />
+        android:layout_marginTop="30sp" />
 
 </RelativeLayout>

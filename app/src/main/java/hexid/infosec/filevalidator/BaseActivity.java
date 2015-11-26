@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class BaseActivity extends AppCompatActivity {
     final static String TargetURL = "http://61.72.174.90";
@@ -46,7 +47,6 @@ public class BaseActivity extends AppCompatActivity {
             return true;
         }
         else if ( id == R.id.action_server ) {
-
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
             dialogBuilder.setTitle("Server address to uplaod");
             final EditText input = new EditText(this);
@@ -59,8 +59,9 @@ public class BaseActivity extends AppCompatActivity {
                             if (input.getText().toString().equals(""))
                                 ;
                             else {
-                                preferenceSettings.edit().putString("serverAddress", input.getText().toString());
-                                preferenceSettings.edit().commit();
+                                SharedPreferences.Editor editor = preferenceSettings.edit().putString("serverAddress", input.getText().toString());
+                                editor.commit();
+                                Toast.makeText(BaseActivity.this, input.getText().toString(), Toast.LENGTH_SHORT).show();
                             }
                         }
                     });

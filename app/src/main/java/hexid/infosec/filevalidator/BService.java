@@ -22,12 +22,10 @@ public class BService extends Service {
     /**
      *  FileObserver: Code Snippet from http://dev.re.kr/m/post/62
      */
-
     //ArrayList<> listFileDownloadFolder =
     public static final ArrayList<TestFileObserver> sListFileObserver = new ArrayList<TestFileObserver>();
     static class TestFileObserver extends FileObserver {
         private String mPath;
-
         int[] eventValue = new int[] {FileObserver.ACCESS, FileObserver.ALL_EVENTS, FileObserver.ATTRIB, FileObserver.CLOSE_NOWRITE,FileObserver.CLOSE_WRITE, FileObserver.CREATE,
                 FileObserver.DELETE, FileObserver.DELETE_SELF,FileObserver.MODIFY,FileObserver.MOVED_FROM,FileObserver.MOVED_TO, FileObserver.MOVE_SELF,FileObserver.OPEN};
         String[] eventName = new String[] {"ACCESS", "ALL_EVENTS", "ATTRIB", "CLOSE_NOWRITE", "CLOSE_WRITE", "CREATE",

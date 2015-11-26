@@ -16,20 +16,34 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.net.Uri;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.PersistentCookieStore;
+import com.loopj.android.http.RequestParams;
+
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Date;
+import java.util.List;
 import java.util.Scanner;
+
+import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.client.CookieStore;
+import cz.msebera.android.httpclient.cookie.Cookie;
+import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 
 
 public class ResultActivity extends BaseActivity {
 
+    TextView textViewTableTitle;
     TextView textViewResponse;
     Button buttonOK;
     ProgressBar progressBarCheck;
@@ -57,17 +71,15 @@ public class ResultActivity extends BaseActivity {
         }
         public void run() {
             try {
-                String boundary = "^******^";
-                // Data boundary
+                String boundary = "^******^"; // Data boundary
                 String delimiter = "\r\n--" + boundary + "\r\n";
                 StringBuffer postDataBuilder = new StringBuffer();
                 postDataBuilder.append(delimiter);
                 postDataBuilder.append(setValue("teamName", "hexid"));
                 postDataBuilder.append(delimiter);
                 // File append
-                postDataBuilder.append(setFile("fileUploaded", f.getAbsolutePath().substring(f.getAbsolutePath().lastIndexOf('/') + 1, f.getAbsolutePath().length())));
+                postDataBuilder.append(setFile("docfile", f.getAbsolutePath().substring(f.getAbsolutePath().lastIndexOf('/') + 1, f.getAbsolutePath().length())));
                 postDataBuilder.append("\r\n");
-
                 URL url;
                 byte[] unitByte;
                 url = new URL(getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL));
@@ -112,6 +124,7 @@ public class ResultActivity extends BaseActivity {
                     public void run() {
                         try {
                             textViewResponse.setText(httpResponse);
+                            textViewTableTitle.setText(f.getAbsolutePath().substring(f.getAbsolutePath().lastIndexOf('/') + 1, f.getAbsolutePath().length()));
                             Toast.makeText(ResultActivity.this, httpResponse, Toast.LENGTH_SHORT).show();
                             progressBarCheck.setVisibility(View.GONE);
                         } catch (Exception e) {
@@ -146,7 +159,8 @@ public class ResultActivity extends BaseActivity {
         else {
             Log.i("Jebum", "Trnasfer()  file: "+path);
             progressBarCheck.setVisibility(View.VISIBLE);
-            transfer(path);
+//            transfer(path);
+            transfer2(path);
         }
         buttonOK = (Button)findViewById(R.id.buttonOK);
         buttonOK.setOnClickListener(new View.OnClickListener() {
@@ -156,6 +170,68 @@ public class ResultActivity extends BaseActivity {
             }
         });
 
+    }
+    /*
+    private String getCsrfFromUrl(String url) {
+        HttpGet httpGet = new HttpGet(url);
+        HttpResponse httpResponse = httpClientStatic.execute(httpGet);
+        HttpEntity httpEntity = httpResponse.getEntity();
+
+        List<Cookie> cookies = httpClientStatic.getCookieStore().getCookies();
+
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals("csrftoken")) {
+                return cookie.getValue();
+            }
+        }
+        return null;  // Or throw exception.
+    }*/
+    String csrfToken;
+    private void transfer2(String path){
+        String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL);
+        AsyncHttpClient client = new AsyncHttpClient();
+        RequestParams params = new RequestParams();
+        PersistentCookieStore myCookieStore = new PersistentCookieStore(this);
+        BasicClientCookie newCookie = new BasicClientCookie("csrftoken", "JShAhinx8XCOxatTApVG2NVj2rH3xOye");
+        newCookie.setVersion(1);
+        newCookie.setDomain("checkthisfile.net");
+        newCookie.setPath("/");
+        newCookie.setAttribute("csrftoken", "JShAhinx8XCOxatTApVG2NVj2rH3xOye");
+        myCookieStore.addCookie(newCookie);
+        client.setCookieStore(myCookieStore);
+        File file = null;
+        try {
+            file = new File(path);
+            params.put("csrfmiddlewaretoken","JShAhinx8XCOxatTApVG2NVj2rH3xOye");
+            params.put("X-CSRFTOKEN", "J22Ahinx8XCOxatTApVG2NVj2rH3xOye");
+            params.put("docfile", file);
+            //URL url = new URL(getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL));
+            client.post(getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL), params, new AsyncHttpResponseHandler() {
+                @Override
+                public void onStart() {
+                    super.onStart();
+                }
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                    Toast.makeText(ResultActivity.this, "success", Toast.LENGTH_SHORT).show();
+                    progressBarCheck.setVisibility(View.GONE);
+                    Log.i("info", new String(responseBody));
+                }
+                @Override
+                public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                    Toast.makeText(ResultActivity.this, "fail", Toast.LENGTH_SHORT).show();
+                    progressBarCheck.setVisibility(View.GONE);
+                    Log.e("jj", error.toString());
+                    Log.e("jj", headers.toString());
+                    Log.e("jj", responseBody.toString());
+                }
+            });
+        } catch(FileNotFoundException e){
+            Log.e("error", e.toString());
+            Toast.makeText(ResultActivity.this, "file not found", Toast.LENGTH_SHORT).show();
+        } //catch (MalformedURLException e) {
+           // e.printStackTrace();
+       // }
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
