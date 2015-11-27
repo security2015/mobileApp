@@ -18,16 +18,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.impl.client.DefaultHttpClient;
-
-import java.io.IOException;
-import java.util.List;
-
 
 /**
  *  H.E.X.I.D 2015
@@ -37,7 +27,6 @@ public class MainActivity extends BaseActivity {
     private String strFilePath;
     TextView textViewFileName;
     Button buttonCheck;
-    final static String TargetURL = "http://61.72.174.90";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +36,7 @@ public class MainActivity extends BaseActivity {
         SharedPreferences pref = getSharedPreferences("preference", MODE_PRIVATE);
         if ( !pref.contains("serverAddress") ){
             SharedPreferences.Editor editor = pref.edit();
-            editor.putString("serverAddress", TargetURL);
+            editor.putString("serverAddress", DefaultURL);
             editor.commit();
         }
         // Monitoring service auto-start according to preference

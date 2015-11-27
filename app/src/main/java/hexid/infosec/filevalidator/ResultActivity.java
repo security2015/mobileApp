@@ -1,10 +1,6 @@
 package hexid.infosec.filevalidator;
 
 import android.os.Bundle;
-import android.os.Environment;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Base64;
-import android.util.Base64OutputStream;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,13 +15,6 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.PersistentCookieStore;
 import com.loopj.android.http.RequestParams;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.impl.client.DefaultHttpClient;
-
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -33,18 +22,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.CookieStore;
-import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
-import java.util.Date;
-import java.util.List;
 import java.util.Scanner;
 
 import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.impl.cookie.BasicClientCookie;
 
 
 public class ResultActivity extends BaseActivity {
@@ -56,9 +39,8 @@ public class ResultActivity extends BaseActivity {
 
     final static String SuccessMessage = "SUCCESS";
     final static String FailedMessage = "error";
-    final static String targetURL = "http://61.72.174.90";
-
     String httpResponse = "";
+
 
     void transfer(String filePath) {
         transfer(new File(filePath));
@@ -88,7 +70,7 @@ public class ResultActivity extends BaseActivity {
                 postDataBuilder.append("\r\n");
                 URL url;
                 byte[] unitByte;
-                url = new URL(getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL));
+                url = new URL(getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", DefaultURL));
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
                 conn.setRequestMethod("GET");
@@ -183,8 +165,8 @@ public class ResultActivity extends BaseActivity {
 
     String csrfToken;
     AsyncHttpClient client;
-    private void transfer2(final String path){
-        String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL);
+    private void transfer2(final String path){      // send http get request to get csrftoken
+        String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", DefaultURL);
         PersistentCookieStore myCookieStore = new PersistentCookieStore(ResultActivity.this);
         client.setCookieStore(myCookieStore);
         client.get(serverURL, new AsyncHttpResponseHandler() {
@@ -196,8 +178,11 @@ public class ResultActivity extends BaseActivity {
                         csrfToken = cookieVal.substring(cookieVal.indexOf("csrftoken=") + 10, cookieVal.indexOf(';'));
                         Log.e("csrfSuccess", csrfToken);
                         transfer3(path);
+                        return;
                     }
                 }
+                Log.e("csrfFail", "Fail to get csrf token");
+                transfer3(path);
             }
 
             @Override
@@ -209,7 +194,7 @@ public class ResultActivity extends BaseActivity {
         });
     }
     private void transfer3(String path) {
-        String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", targetURL);
+        String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", DefaultURL);
         if ( csrfToken == null )
             Log.e("ping","ping");
         else
@@ -237,17 +222,19 @@ public class ResultActivity extends BaseActivity {
                 public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                     Toast.makeText(ResultActivity.this, "success", Toast.LENGTH_SHORT).show();
                     for ( Header header: headers )
-                        Log.i("csrfSuccess:header", header.getValue());
-                    Log.i("csrfSuccess",  new String(responseBody));
+                        Log.i("transferSuccess:header", header.getValue());
+                    Log.i("transferSuccess",  new String(responseBody));
                     progressBarCheck.setVisibility(View.GONE);
                 }
                 @Override
                 public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                     Toast.makeText(ResultActivity.this, "fail", Toast.LENGTH_SHORT).show();
-                    Log.e("csrfFail", error.toString()+statusCode);
-                    for ( Header header: headers )
-                        Log.i("csrfFail:header", header.getName());
-                    Log.e("csrfFail:body", new String(responseBody));
+                    Log.e("transferFail", error.toString()+statusCode);
+                    for ( Header header: headers ) {
+                        Log.i("transferFail:header", header.getName());
+                        Log.i("transferFail:header", header.getValue());
+                    }
+                    Log.e("transferFail:body", new String(responseBody));
                     progressBarCheck.setVisibility(View.GONE);
                 }
             });

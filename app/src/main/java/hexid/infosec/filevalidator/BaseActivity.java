@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,7 +12,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public class BaseActivity extends AppCompatActivity {
-    final static String TargetURL = "http://61.72.174.90";
+    final static String DefaultURL = "http://checkthisfile.net/myapp/list/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +50,7 @@ public class BaseActivity extends AppCompatActivity {
             dialogBuilder.setTitle("Server address to uplaod");
             final EditText input = new EditText(this);
             input.setSingleLine();
-            input.setText(preferenceSettings.getString("serverAddress", TargetURL));
+            input.setText(preferenceSettings.getString("serverAddress", DefaultURL));
             dialogBuilder.setView(input);
             dialogBuilder.setPositiveButton("Set",
                     new DialogInterface.OnClickListener() {
