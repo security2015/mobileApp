@@ -9,9 +9,6 @@
     <item android:id="@+id/action_monitoring"
         android:checkable="true"
         android:title="Monitoring" />
-    <item android:id="@+id/blue"
-        android:title="blue"
-        android:showAsAction="always"/>
     <item android:id="@+id/mymenu" android:title="My menu"
         app:showAsAction="never" />
 

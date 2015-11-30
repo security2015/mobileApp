@@ -81,13 +81,9 @@ public class BService extends Service {
     }
 
     private void downloadObserved ()  {
-        Builder mBuilder =
-                (Builder) new Builder(this)
-                        .setSmallIcon(R.drawable.search_icon)
-                        .setContentTitle("CheckEr")
+        Builder mBuilder = (Builder) new Builder(this).setSmallIcon(R.drawable.search_icon).setContentTitle("CheckEr")
                         .setContentText("File Downloaded");
         Intent resultIntent = new Intent(this, MainActivity.class);
-
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         stackBuilder.addParentStack(ResultActivity.class);
         stackBuilder.addNextIntent(resultIntent);
@@ -100,7 +96,12 @@ public class BService extends Service {
         NotificationManager mNotificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(1, mBuilder.build());
-        Toast.makeText(this, "Monitoring On", Toast.LENGTH_SHORT).show();
+    }
+    private void showPopUpNotification () {
+        // Make popup(Call PopupActivity)
+        Intent popupIntent = new Intent(this, PopupActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        this.startActivity(popupIntent);
     }
 
 
@@ -116,7 +117,6 @@ public class BService extends Service {
                         .setContentTitle("CheckEr")
                         .setContentText("Monitoring");
         Intent resultIntent = new Intent(this, MainActivity.class);
-
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         stackBuilder.addParentStack(ResultActivity.class);
         stackBuilder.addNextIntent(resultIntent);
@@ -129,6 +129,7 @@ public class BService extends Service {
         NotificationManager mNotificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(1, mBuilder.build());
+
         Toast.makeText(this, "Monitoring On", Toast.LENGTH_SHORT).show();
 
         return super.onStartCommand(intent, flags, startId);

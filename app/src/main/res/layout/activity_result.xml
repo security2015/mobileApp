@@ -23,7 +23,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="2">
+            android:layout_weight="3">
         </View>
         <View
             android:layout_width="1sp"
@@ -34,36 +34,34 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:gravity="center"
             android:layout_weight="1"
             >
             <TableRow
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:padding="10sp">
+                android:paddingTop="10sp">
                 <TextView
                     android:id="@+id/textViewTableTitle"
+                    android:textStyle="bold"
                     android:textSize="20sp"
                     android:text="Title"
-                    android:gravity="center"
-                    android:layout_height="match_parent">
-
-                </TextView>
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:padding="10sp">
-                <TextView
-                    android:text="IsValid"
+                    android:layout_height="match_parent"
+                    android:layout_width="0sp"
                     android:layout_weight="1"
-                    android:layout_width="match_parent">
+                    android:singleLine="false">
                 </TextView>
+            </TableRow>
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="10sp"
+                android:paddingTop="1sp">
                 <TextView
-                    android:text="Valid"
-                    android:layout_weight="1">
+                    android:id="@+id/textViewResult"
+                    android:textSize="12sp"
+                    >
                 </TextView>
             </TableRow>
             <TableRow
@@ -72,12 +70,44 @@
                 android:gravity="center"
                 android:padding="10sp">
                 <TextView
-                    android:text="Expected Type"
+                    android:text="Embedded file :"
+                    android:layout_weight="1"
+                    >
+                </TextView>
+            </TableRow>
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="10sp"
+                android:paddingTop="1sp">
+                <TextView
+                    android:id="@+id/textViewEmbedded"
+                    android:textSize="12sp"
+                    >
+                </TextView>
+            </TableRow>
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="10sp">
+                <TextView
+                    android:text="Extension type :"
                     android:layout_weight="1">
                 </TextView>
+            </TableRow>
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="10sp"
+                android:paddingTop="1sp">
                 <TextView
-                    android:layout_weight="1">
-                 </TextView>
+                    android:id="@+id/textViewExtension"
+                    android:textSize="12sp"
+                    >
+                </TextView>
             </TableRow>
         </TableLayout>
         <View
@@ -88,7 +118,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="2">
+            android:layout_weight="3">
         </View>
     </LinearLayout>
     <TextView
@@ -101,7 +131,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Check complete"
+        android:text=""
         android:textSize="30dp"
          />
     <Button

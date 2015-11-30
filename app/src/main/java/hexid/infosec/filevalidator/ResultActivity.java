@@ -1,5 +1,6 @@
 package hexid.infosec.filevalidator;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -15,17 +16,11 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.PersistentCookieStore;
 import com.loopj.android.http.RequestParams;
 
-import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Scanner;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -34,115 +29,25 @@ public class ResultActivity extends BaseActivity {
 
     TextView textViewTableTitle;
     TextView textViewResponse;
+    TextView textViewEmbedded;
+    TextView textViewExtension;
+    TextView textViewResult;
     Button buttonOK;
     ProgressBar progressBarCheck;
 
     final static String SuccessMessage = "SUCCESS";
     final static String FailedMessage = "error";
-    String httpResponse = "";
 
-
-    void transfer(String filePath) {
-        transfer(new File(filePath));
-    }
-    void transfer(File f) {
-        TransferThread thread = new TransferThread();
-        thread.setF(f);
-        thread.start();
-    }
-
-    // Network I/O thread
-    class TransferThread extends Thread {
-        File f;
-        public void setF(File file) {
-            f = file;
-        }
-        public void run() {
-            try {
-                String boundary = "^******^"; // Data boundary
-                String delimiter = "\r\n--" + boundary + "\r\n";
-                StringBuffer postDataBuilder = new StringBuffer();
-                postDataBuilder.append(delimiter);
-                postDataBuilder.append(setValue("teamName", "hexid"));
-                postDataBuilder.append(delimiter);
-                // File append
-                postDataBuilder.append(setFile("docfile", f.getAbsolutePath().substring(f.getAbsolutePath().lastIndexOf('/') + 1, f.getAbsolutePath().length())));
-                postDataBuilder.append("\r\n");
-                URL url;
-                byte[] unitByte;
-                url = new URL(getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", DefaultURL));
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-                conn.setRequestMethod("GET");
-
-                conn.setDoOutput(true);
-                conn.setChunkedStreamingMode(0);
-                conn.setRequestMethod("POST");  // Use http POST method
-                conn.setRequestProperty("Connection", "Keep-Alive");
-                conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
-                DataOutputStream outputStream = new DataOutputStream(conn.getOutputStream());
-                outputStream.writeUTF(postDataBuilder.toString());
-
-                //Base64OutputStream base64OutputStream = new Base64OutputStream(outputStream, Base64.NO_CLOSE);
-                BufferedOutputStream buffer = new BufferedOutputStream(outputStream);
-                FileInputStream fileInputStream = new FileInputStream(f);
-                unitByte = new byte[1024];
-                while ( fileInputStream.read(unitByte) != -1 ) {
-                    buffer.write(unitByte);
-                }
-                fileInputStream.close();
-                outputStream.writeBytes(delimiter);
-                outputStream.close();
-
-                InputStream inputStream = conn.getInputStream();
-                Scanner scanner = new Scanner(inputStream);
-                while( scanner.hasNext() ) {
-                    String response = scanner.nextLine();
-                    // JB:간단한 html parser..test용.
-                    /*if ( response.contains("<body>") ) {
-                        response = response.substring(response.indexOf("<body>")+6, response.lastIndexOf("</body"));
-                    }*/
-                    if ( response != null && response.equalsIgnoreCase(SuccessMessage)) {
-                        httpResponse = SuccessMessage;
-                    }
-                    else {
-                        httpResponse = response;
-                    }
-                }
-                conn.disconnect();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            textViewResponse.setText(httpResponse);
-                            textViewTableTitle.setText(f.getAbsolutePath().substring(f.getAbsolutePath().lastIndexOf('/') + 1, f.getAbsolutePath().length()));
-                            Toast.makeText(ResultActivity.this, httpResponse, Toast.LENGTH_SHORT).show();
-                            progressBarCheck.setVisibility(View.GONE);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        String setValue(String key, String value) {
-            return "Content-Disposition: form-data; name=\"" + key + "\"r\n\r\n"
-                    + value;
-        }
-        String setFile(String key, String fileName) {
-            return "Content-Disposition: form-data; name=\"" + key
-                    + "\";filename=\"" + fileName + "\"\r\n";
-        }
-    }
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
         progressBarCheck = (ProgressBar)findViewById(R.id.progressBarCheck);
         textViewResponse = (TextView)findViewById(R.id.textViewResponse);
+        textViewResult = (TextView)findViewById(R.id.textViewResult);
+        textViewTableTitle = (TextView)findViewById(R.id.textViewTableTitle);
+        textViewEmbedded = (TextView)findViewById(R.id.textViewEmbedded);
+        textViewExtension = (TextView)findViewById(R.id.textViewExtension);
+        textViewTableTitle.setText(this.getIntent().getExtras().getString("fileName"));
         String path = this.getIntent().getExtras().getString("filePath");
         Log.i("Jebum", "onCreate()  file: " + path);
         if  ( path  == null )
@@ -150,7 +55,6 @@ public class ResultActivity extends BaseActivity {
         else {
             Log.i("Jebum", "Trnasfer() file: " + path);
             progressBarCheck.setVisibility(View.VISIBLE);
-//            transfer(path);
             client= new AsyncHttpClient();
             transfer2(path);
         }
@@ -163,9 +67,76 @@ public class ResultActivity extends BaseActivity {
         });
     }
 
+    /**
+     * @param result
+     *
+     */
+    private void resultProcessing ( String result ) {
+        int resultCode = -1;
+        String embeddedMessage = "";
+        String expectedExtention = "";
+        try {
+            JSONObject jsonObject= new JSONObject(result);
+            resultCode = jsonObject.getInt("result");
+            embeddedMessage = jsonObject.getString("tmp value");
+            expectedExtention = jsonObject.getString("extension");
+        //    Log.i("JSON parsed", resultCode + embeddedMessage + expectedExtention);
+
+        } catch (JSONException e) {
+            Log.e("JsonException",e.toString());
+            e.printStackTrace();
+        }
+        switch( resultCode ) {
+            case -1:
+                Log.e("result:error",result);
+                Toast.makeText(this, "Error", Toast.LENGTH_SHORT);
+                textViewResult.setText("Error");
+                textViewResult.setTextColor(Color.parseColor("#DB0000")); //red
+                break;
+            case 0:
+                textViewResult.setText("is not supported");
+                textViewResult.setTextColor(Color.parseColor("#5D5D5D")); //gray
+                break;
+            case 1:
+                textViewResult.setText("is Normal file");
+                textViewResult.setTextColor(Color.parseColor("#47C83E")); //green color
+                textViewEmbedded.setText("No files found");
+                textViewEmbedded.setTextColor(Color.parseColor("#47C83E")); //green color
+                textViewExtension.setText(expectedExtention);
+                textViewExtension.setTextColor(Color.parseColor("#47C83E")); //green color
+                break;
+            case 2:
+                textViewResult.setText("is suspicious file");
+                textViewResult.setTextColor(Color.parseColor("#DB0000")); //red
+                textViewEmbedded.setText(embeddedMessage);
+                textViewEmbedded.setTextColor(Color.parseColor("#DB0000")); //red
+                textViewExtension.setText(expectedExtention);
+                textViewExtension.setTextColor(Color.parseColor("#47C83E")); //green
+                break;
+            case 3:
+                textViewResult.setText("is suspicious file");
+                textViewResult.setTextColor(Color.parseColor("#DB0000")); //red
+                textViewEmbedded.setText("No files found");
+                textViewEmbedded.setTextColor(Color.parseColor("#47C83E")); //green
+                textViewExtension.setText(expectedExtention);
+                textViewExtension.setTextColor(Color.parseColor("#DB0000")); //red
+                break;
+            case 4:
+                textViewTableTitle.setText("is suspicious file");
+                textViewTableTitle.setTextColor(Color.parseColor("#DB0000")); //red
+                textViewEmbedded.setText(embeddedMessage);
+                textViewEmbedded.setTextColor(Color.parseColor("#DB0000")); //red
+                textViewExtension.setText(expectedExtention);
+                textViewExtension.setTextColor(Color.parseColor("#DB0000")); //red
+                default:
+        }
+
+
+    }
+
     String csrfToken;
     AsyncHttpClient client;
-    private void transfer2(final String path){      // send http get request to get csrftoken
+    private void transfer2(final String path){      // send http get request to obtain csrftoken
         String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", DefaultURL);
         PersistentCookieStore myCookieStore = new PersistentCookieStore(ResultActivity.this);
         client.setCookieStore(myCookieStore);
@@ -184,23 +155,23 @@ public class ResultActivity extends BaseActivity {
                 Log.e("csrfFail", "Fail to get csrf token");
                 transfer3(path);
             }
-
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                 Log.e("csrfFail", error.toString());
-                Log.e("csrfFail", headers.toString());
-                Log.e("csrfFail", responseBody.toString());
+                for ( Header header: headers )  Log.e("csrfFail", header.toString());
+                Log.e("csrfFail", new String(responseBody));
             }
         });
     }
     private void transfer3(String path) {
         String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", DefaultURL);
-        if ( csrfToken == null )
-            Log.e("ping","ping");
-        else
-                Log.e("ping",csrfToken);
         RequestParams params = new RequestParams();
         PersistentCookieStore myCookieStore = new PersistentCookieStore(ResultActivity.this);
+        /*if ( csrfToken == null )
+            Log.e("ping","ping");
+        else
+            Log.e("ping",csrfToken);
+*/
         //myCookieStore.clear();
        // BasicClientCookie newCookie = new BasicClientCookie("csrftoken", csrfToken);
      //   newCookie.setDomain("checkthisfile.net");
@@ -208,7 +179,7 @@ public class ResultActivity extends BaseActivity {
      //   myCookieStore.addCookie(newCookie);
         client.setCookieStore(myCookieStore);
         client.addHeader("X-CSRFTOKEN", csrfToken);
-        File file = null;
+        File file;
         try {
             file = new File(path);
             params.put("csrfmiddlewaretoken",csrfToken);
@@ -220,10 +191,10 @@ public class ResultActivity extends BaseActivity {
                 }
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                    Toast.makeText(ResultActivity.this, "success", Toast.LENGTH_SHORT).show();
-                    for ( Header header: headers )
-                        Log.i("transferSuccess:header", header.getValue());
+                    //Toast.makeText(ResultActivity.this, "success", Toast.LENGTH_SHORT).show();
+                    for ( Header header: headers ) Log.i("transferSuccess:header", header.toString());
                     Log.i("transferSuccess",  new String(responseBody));
+                    resultProcessing(new String(responseBody));
                     progressBarCheck.setVisibility(View.GONE);
                 }
                 @Override
@@ -255,4 +226,3 @@ public class ResultActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 }
-

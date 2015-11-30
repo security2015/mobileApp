@@ -63,6 +63,7 @@ public class MainActivity extends BaseActivity {
         }
         Intent intent = new Intent(this, ResultActivity.class);
         intent.putExtra("filePath", strFilePath);
+        intent.putExtra("fileName", textViewFileName.getText().toString());
         startActivityForResult(intent, 1);
     }
     public void openExplorer(View arg0){
