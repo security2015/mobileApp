@@ -6,6 +6,7 @@ import android.app.Service;
 import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Environment;
 import android.os.FileObserver;
 import android.os.IBinder;
@@ -13,21 +14,31 @@ import android.support.v7.app.NotificationCompat.Builder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.PersistentCookieStore;
+import com.loopj.android.http.RequestParams;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
+
+import cz.msebera.android.httpclient.Header;
 
 
 public class BService extends Service {
+
+    final static String DefaultURL = "http://checkthisfile.net/myapp/list/";
 
     /**
      *  FileObserver: Code Snippet from http://dev.re.kr/m/post/62
      */
 
-    //ArrayList<> listFileDownloadFolder =
     public static final ArrayList<TestFileObserver> sListFileObserver = new ArrayList<TestFileObserver>();
-    static class TestFileObserver extends FileObserver {
+    class TestFileObserver extends FileObserver {
         private String mPath;
 
         int[] eventValue = new int[] {FileObserver.ACCESS, FileObserver.ALL_EVENTS, FileObserver.ATTRIB, FileObserver.CLOSE_NOWRITE,FileObserver.CLOSE_WRITE, FileObserver.CREATE,
@@ -62,11 +73,7 @@ public class BService extends Service {
             strEvents.append("\tPath : ").append(path).append('(').append(mPath).append(')');
             Log.i("TestFileObserver", strEvents.toString());
             if (  event ==  FileObserver.CREATE ) {
-                String createdFile="";
-                if ( createdFile.substring(createdFile.lastIndexOf('.'), createdFile.length()).equals("crdownload") )
-                    ;
-                else
-                    ;
+                    downloadObserved();
             }
         }
     }
@@ -88,33 +95,51 @@ public class BService extends Service {
             if(file.isDirectory()) monitorAllFiles(file);
         }
     }
-/*
-    static ArrayList<String> fileList;
-    static String getCreatedFile () {
-        File f = new File(Environment.getExternalStorageDirectory(), "Downloads");
-        if ( fileList == null ) {
-            fileList = new ArrayList<String>(Arrays.asList(f.list()));
-            return "";
-        }
-        ArrayList<String> downloads = new ArrayList<String>(Arrays.asList(f.list()));
 
-        String createdFile = "";
-        for ( String fileName : downloads )
-            if ( !fileList.contains(fileName))
-                createdFile = fileName;
-        return createdFile;
-    }
-    */
-    private void downloadObserved ()  {
-        Builder mBuilder = (Builder) new Builder(this).setSmallIcon(R.drawable.search_icon).setContentTitle("CheckEr")
-                        .setContentText("File Downloaded");
-        //Intent resultIntent = new Intent(this, MainActivity.class);
+    private void downloadObserved ( )  {
 
         String downloadPath = Environment.getExternalStorageDirectory()+"/Download";
         String strFilePath = lastFileModified(downloadPath);
-        Intent resultIntent = new Intent(this, ResultActivity.class);
-        resultIntent.putExtra("filePath", strFilePath);
+        if ( strFilePath.substring(strFilePath.lastIndexOf('.'), strFilePath.length()).equals("crdownload") )
+            ;
+        else if ( strFilePath.contains(".com.google.Chrome."))
+            ;
+        else {
+            transfer2(strFilePath);
+        }
+    }
+    private void resultProcessing ( String JSON ) {
+        int extensionResult = -1;
+        int embeddedResult = -1;
+        try {
+            JSONObject j = new JSONObject(JSON);
+            JSONObject jsonObject= new JSONObject(JSON);
+            extensionResult = jsonObject.getInt("extension_result");
+            embeddedResult = jsonObject.getInt("embedded_result");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        if ( extensionResult == 1 && embeddedResult == 1 )
+            showNotification(JSON);
+        else
+            showPopUpNotification(JSON);
 
+
+    }
+    private void showNotification ( String JSON ) {
+        String fileName="";
+        try {
+            fileName = new JSONObject(JSON).getString("original");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Intent resultIntent = new Intent(this, ResultActivity.class);
+        resultIntent.putExtra("json", JSON);
+        Builder mBuilder = (Builder) new Builder(this).setSmallIcon(R.drawable.icon_search)
+                .setContentTitle("File Downloaded: " + fileName)
+                .setContentText(" Approved as safe file w/ CheckEr");
+        BitmapDrawable d = (BitmapDrawable)getResources().getDrawable(R.drawable.icon_search);
+        mBuilder.setLargeIcon(d.getBitmap());
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         stackBuilder.addParentStack(ResultActivity.class);
         stackBuilder.addNextIntent(resultIntent);
@@ -128,21 +153,13 @@ public class BService extends Service {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(1, mBuilder.build());
     }
-    private void showPopUpNotification () {
-        // Make popup(Call PopupActivity)
+    private void showPopUpNotification ( String JSON ) {
+        // Make popup: Call PopupActivity
         Intent popupIntent = new Intent(this, PopupActivity.class)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        this.startActivity(popupIntent);
-
-    /*public void check() {
-        if ( strFilePath == null ) {
-            Toast.makeText(this, "Pick file to check", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        Intent intent = new Intent(this, ResultActivity.class);
-        intent.putExtra("filePath", strFilePath);
-        startActivityForResult(intent, 1);
-    }*/
+        popupIntent.putExtra("json", JSON);
+        startActivity(popupIntent);
+    }
 
     private String lastFileModified(String dir) {
         File fl = new File(dir);
@@ -162,14 +179,13 @@ public class BService extends Service {
         return choice.getAbsolutePath();
     }
 
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String downloadPath = Environment.getExternalStorageDirectory()+"/Download";
         // Monitoring file chage
         monitorAllFiles(new File(Environment.getExternalStorageDirectory() + "/Download"));
         Toast.makeText(this, "Monitoring On", Toast.LENGTH_SHORT).show();
-
+        client = new AsyncHttpClient();
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -183,5 +199,73 @@ public class BService extends Service {
         stopMonitoring(new File(Environment.getExternalStorageDirectory()+"/Download"));
         Toast.makeText(this, "Monitoring Off", Toast.LENGTH_SHORT).show();
         super.onDestroy();
+    }
+
+    String csrfToken;
+    AsyncHttpClient client;
+    private void transfer2(final String path){      // send http get request to obtain csrftoken
+        String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", DefaultURL);
+        PersistentCookieStore myCookieStore = new PersistentCookieStore(BService.this);
+        client.setCookieStore(myCookieStore);
+        client.get(serverURL, new AlwaysAsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                for (Header header : headers) {
+                    if (header.getName().equals("Set-Cookie")) {
+                        String cookieVal = header.getValue();
+                        csrfToken = cookieVal.substring(cookieVal.indexOf("csrftoken=") + 10, cookieVal.indexOf(';'));
+                        Log.e("csrfSuccess", csrfToken);
+                        transfer3(path);
+                        return;
+                    }
+                }
+                Log.e("csrfFail", "Fail to get csrf token");
+                transfer3(path);
+            }
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                Log.e("csrfFail", error.toString());
+                for ( Header header: headers )  Log.e("csrfFail", header.toString());
+                Log.e("csrfFail", new String(responseBody));
+            }
+        });
+    }
+    private void transfer3(String path) {
+        String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", DefaultURL);
+        RequestParams params = new RequestParams();
+        PersistentCookieStore myCookieStore = new PersistentCookieStore(BService.this);
+        client.setCookieStore(myCookieStore);
+        client.addHeader("X-CSRFTOKEN", csrfToken);
+        File file;
+        try {
+            file = new File(path);
+            params.put("csrfmiddlewaretoken",csrfToken);
+            params.put("docfile", file);
+            client.post(serverURL, params, new AlwaysAsyncHttpResponseHandler() {
+                @Override
+                public void onStart() {
+                    super.onStart();
+                }
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                    for ( Header header: headers ) Log.i("transferSuccess:header", header.toString());
+                    Log.i("transferSuccess", new String(responseBody));
+                    resultProcessing(new String(responseBody));
+                }
+                @Override
+                public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                    Toast.makeText(BService.this, "fail", Toast.LENGTH_SHORT).show();
+                    Log.e("transferFail", error.toString()+statusCode);
+                    for ( Header header: headers ) {
+                        Log.i("transferFail:header", header.getName());
+                        Log.i("transferFail:header", header.getValue());
+                    }
+                    Log.e("transferFail:body", new String(responseBody));
+                }
+            });
+        } catch(FileNotFoundException e) {
+            Log.e("error", e.toString());
+            Toast.makeText(BService.this, "file not found", Toast.LENGTH_SHORT).show();
+        }
     }
 }

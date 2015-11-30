@@ -87,6 +87,9 @@
                 <TextView
                     android:id="@+id/textViewEmbedded"
                     android:textSize="15sp"
+                    android:layout_width="0sp"
+                    android:layout_weight="1"
+                    android:singleLine="false"
                     >
                 </TextView>
             </TableRow>

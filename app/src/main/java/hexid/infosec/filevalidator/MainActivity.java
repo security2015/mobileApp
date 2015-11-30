@@ -56,7 +56,7 @@ public class MainActivity extends BaseActivity {
         });
     }
 
-    public void check() {
+    public void check () {
         if ( strFilePath == null ) {
             Toast.makeText(this, "Pick file to check", Toast.LENGTH_SHORT).show();
             return;

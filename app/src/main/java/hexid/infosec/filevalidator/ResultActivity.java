@@ -42,21 +42,25 @@ public class ResultActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
         progressBarCheck = (ProgressBar)findViewById(R.id.progressBarCheck);
-        textViewResponse = (TextView)findViewById(R.id.textViewResponse);
         textViewResult = (TextView)findViewById(R.id.textViewResult);
         textViewTableTitle = (TextView)findViewById(R.id.textViewTableTitle);
         textViewEmbedded = (TextView)findViewById(R.id.textViewEmbedded);
         textViewExtension = (TextView)findViewById(R.id.textViewExtension);
-        textViewTableTitle.setText(this.getIntent().getExtras().getString("fileName"));
-        String path = this.getIntent().getExtras().getString("filePath");
-        Log.i("Jebum", "onCreate()  file: " + path);
-        if  ( path  == null )
-            Toast.makeText(this, "Null path", Toast.LENGTH_SHORT).show();
+        if ( getIntent().getExtras().getString("json") != null ) {
+            resultProcessing(getIntent().getExtras().getString("json"));
+        }
         else {
-            Log.i("Jebum", "Trnasfer() file: " + path);
-            progressBarCheck.setVisibility(View.VISIBLE);
-            client= new AsyncHttpClient();
-            transfer2(path);
+            textViewTableTitle.setText(this.getIntent().getExtras().getString("fileName"));
+            String path = this.getIntent().getExtras().getString("filePath");
+            Log.i("Jebum", "onCreate()  file: " + path);
+            if (path == null)
+                Toast.makeText(this, "Null path", Toast.LENGTH_SHORT).show();
+            else {
+                Log.i("Jebum", "Trnasfer() file: " + path);
+                progressBarCheck.setVisibility(View.VISIBLE);
+                client = new AsyncHttpClient();
+                readyTransfer(path);
+            }
         }
         buttonOK = (Button) findViewById(R.id.buttonOK);
         buttonOK.setOnClickListener(new View.OnClickListener() {
@@ -72,71 +76,77 @@ public class ResultActivity extends BaseActivity {
      *
      */
     private void resultProcessing ( String result ) {
-        int resultCode = -1;
+        int extensionResult = -1;
+        int embeddedResult = -1;
         String embeddedMessage = "";
         String expectedExtention = "";
+        String fileName = "";
         try {
             JSONObject jsonObject= new JSONObject(result);
-            resultCode = jsonObject.getInt("result");
-            embeddedMessage = jsonObject.getString("tmp value");
-            expectedExtention = jsonObject.getString("extension");
+            extensionResult = jsonObject.getInt("extension_result");
+            embeddedResult = jsonObject.getInt("embedded_result");
+            embeddedMessage = jsonObject.getString("embedded_message");
+            expectedExtention = jsonObject.getString("expected");
+            fileName = jsonObject.getString("original");
         //    Log.i("JSON parsed", resultCode + embeddedMessage + expectedExtention);
 
         } catch (JSONException e) {
             Log.e("JsonException",e.toString());
             e.printStackTrace();
         }
-        switch( resultCode ) {
-            case -1:
-                Log.e("result:error",result);
-                Toast.makeText(this, "Error", Toast.LENGTH_SHORT);
-                textViewResult.setText("Error");
-                textViewResult.setTextColor(Color.parseColor("#DB0000")); //red
-                break;
+        if ( fileName != null || !fileName.equals("") )
+             textViewTableTitle.setText(fileName);
+        if ( extensionResult == 1 && embeddedResult == 1 ) {
+            textViewResult.setText("is Normal file");
+            textViewResult.setTextColor(Color.parseColor("#47C83E")); //green color
+        }
+        else if ( extensionResult == 0 ) {
+            textViewResult.setText("is Not Supported file");
+            textViewResult.setTextColor(Color.parseColor("#DB0000")); //red
+        }
+        else {
+            textViewResult.setText("is Suspicous file");
+            textViewResult.setTextColor(Color.parseColor("#DB0000"));
+        }
+        switch( extensionResult ) {
             case 0:
-                textViewResult.setText("is not supported");
-                textViewResult.setTextColor(Color.parseColor("#5D5D5D")); //gray
+                textViewExtension.setText("Not supported");
+                textViewExtension.setTextColor(Color.parseColor("#DB0000"));
                 break;
             case 1:
-                textViewResult.setText("is Normal file");
-                textViewResult.setTextColor(Color.parseColor("#47C83E")); //green color
-                textViewEmbedded.setText("No files found");
-                textViewEmbedded.setTextColor(Color.parseColor("#47C83E")); //green color
                 textViewExtension.setText(expectedExtention);
                 textViewExtension.setTextColor(Color.parseColor("#47C83E")); //green color
                 break;
             case 2:
-                textViewResult.setText("is suspicious file");
-                textViewResult.setTextColor(Color.parseColor("#DB0000")); //red
-                textViewEmbedded.setText(embeddedMessage);
-                textViewEmbedded.setTextColor(Color.parseColor("#DB0000")); //red
-                textViewExtension.setText(expectedExtention);
-                textViewExtension.setTextColor(Color.parseColor("#47C83E")); //green
-                break;
-            case 3:
-                textViewResult.setText("is suspicious file");
-                textViewResult.setTextColor(Color.parseColor("#DB0000")); //red
-                textViewEmbedded.setText("No files found");
-                textViewEmbedded.setTextColor(Color.parseColor("#47C83E")); //green
                 textViewExtension.setText(expectedExtention);
                 textViewExtension.setTextColor(Color.parseColor("#DB0000")); //red
                 break;
-            case 4:
-                textViewTableTitle.setText("is suspicious file");
-                textViewTableTitle.setTextColor(Color.parseColor("#DB0000")); //red
-                textViewEmbedded.setText(embeddedMessage);
-                textViewEmbedded.setTextColor(Color.parseColor("#DB0000")); //red
-                textViewExtension.setText(expectedExtention);
-                textViewExtension.setTextColor(Color.parseColor("#DB0000")); //red
-                default:
+            default:
+                textViewExtension.setText("No information");
+                textViewExtension.setTextColor(Color.parseColor("#777777"));
         }
-
-
+        switch (embeddedResult) {
+            case 0:
+                textViewEmbedded.setText("Not supported");
+                textViewEmbedded.setTextColor(Color.parseColor("#DB0000")); //red
+                break;
+            case 1:
+                textViewEmbedded.setText("No file found.");
+                textViewEmbedded.setTextColor(Color.parseColor("#47C83E")); //green color
+                break;
+            case 2:
+                textViewEmbedded.setText(embeddedMessage);
+                textViewEmbedded.setTextColor(Color.parseColor("#DB0000")); //red
+                break;
+            default:
+                textViewEmbedded.setText("No information");
+                textViewEmbedded.setTextColor(Color.parseColor("#777777"));
+        }
     }
 
     String csrfToken;
     AsyncHttpClient client;
-    private void transfer2(final String path){      // send http get request to obtain csrftoken
+    private void readyTransfer(final String path){      // send http get request to obtain csrftoken
         String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", DefaultURL);
         PersistentCookieStore myCookieStore = new PersistentCookieStore(ResultActivity.this);
         client.setCookieStore(myCookieStore);
@@ -148,12 +158,12 @@ public class ResultActivity extends BaseActivity {
                         String cookieVal = header.getValue();
                         csrfToken = cookieVal.substring(cookieVal.indexOf("csrftoken=") + 10, cookieVal.indexOf(';'));
                         Log.e("csrfSuccess", csrfToken);
-                        transfer3(path);
+                        transferFile(path);
                         return;
                     }
                 }
                 Log.e("csrfFail", "Fail to get csrf token");
-                transfer3(path);
+                transferFile(path);
             }
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
@@ -163,20 +173,10 @@ public class ResultActivity extends BaseActivity {
             }
         });
     }
-    private void transfer3(String path) {
+    private void transferFile(String path) {
         String serverURL = getSharedPreferences("preference", MODE_PRIVATE).getString("serverAddress", DefaultURL);
         RequestParams params = new RequestParams();
         PersistentCookieStore myCookieStore = new PersistentCookieStore(ResultActivity.this);
-        /*if ( csrfToken == null )
-            Log.e("ping","ping");
-        else
-            Log.e("ping",csrfToken);
-*/
-        //myCookieStore.clear();
-       // BasicClientCookie newCookie = new BasicClientCookie("csrftoken", csrfToken);
-     //   newCookie.setDomain("checkthisfile.net");
-     //   newCookie.setPath("/");
-     //   myCookieStore.addCookie(newCookie);
         client.setCookieStore(myCookieStore);
         client.addHeader("X-CSRFTOKEN", csrfToken);
         File file;
