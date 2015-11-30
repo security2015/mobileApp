@@ -14,6 +14,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -23,10 +24,12 @@ public class BService extends Service {
     /**
      *  FileObserver: Code Snippet from http://dev.re.kr/m/post/62
      */
+
     //ArrayList<> listFileDownloadFolder =
     public static final ArrayList<TestFileObserver> sListFileObserver = new ArrayList<TestFileObserver>();
     static class TestFileObserver extends FileObserver {
         private String mPath;
+
         int[] eventValue = new int[] {FileObserver.ACCESS, FileObserver.ALL_EVENTS, FileObserver.ATTRIB, FileObserver.CLOSE_NOWRITE,FileObserver.CLOSE_WRITE, FileObserver.CREATE,
                 FileObserver.DELETE, FileObserver.DELETE_SELF,FileObserver.MODIFY,FileObserver.MOVED_FROM,FileObserver.MOVED_TO, FileObserver.MOVE_SELF,FileObserver.OPEN};
         String[] eventName = new String[] {"ACCESS", "ALL_EVENTS", "ATTRIB", "CLOSE_NOWRITE", "CLOSE_WRITE", "CREATE",
@@ -105,7 +108,13 @@ public class BService extends Service {
     private void downloadObserved ()  {
         Builder mBuilder = (Builder) new Builder(this).setSmallIcon(R.drawable.search_icon).setContentTitle("CheckEr")
                         .setContentText("File Downloaded");
-        Intent resultIntent = new Intent(this, MainActivity.class);
+        //Intent resultIntent = new Intent(this, MainActivity.class);
+
+        String downloadPath = Environment.getExternalStorageDirectory()+"/Download";
+        String strFilePath = lastFileModified(downloadPath);
+        Intent resultIntent = new Intent(this, ResultActivity.class);
+        resultIntent.putExtra("filePath", strFilePath);
+
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         stackBuilder.addParentStack(ResultActivity.class);
         stackBuilder.addNextIntent(resultIntent);
@@ -124,6 +133,33 @@ public class BService extends Service {
         Intent popupIntent = new Intent(this, PopupActivity.class)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         this.startActivity(popupIntent);
+
+    /*public void check() {
+        if ( strFilePath == null ) {
+            Toast.makeText(this, "Pick file to check", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Intent intent = new Intent(this, ResultActivity.class);
+        intent.putExtra("filePath", strFilePath);
+        startActivityForResult(intent, 1);
+    }*/
+
+    private String lastFileModified(String dir) {
+        File fl = new File(dir);
+        File[] files = fl.listFiles(new FileFilter() {
+            public boolean accept(File file) {
+                return file.isFile();
+            }
+        });
+        long lastMod = Long.MIN_VALUE;
+        File choice = null;
+        for (File file : files) {
+            if (file.lastModified() > lastMod) {
+                choice = file;
+                lastMod = file.lastModified();
+            }
+        }
+        return choice.getAbsolutePath();
     }
 
 
