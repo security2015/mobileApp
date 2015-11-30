@@ -2,11 +2,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center">
+    android:gravity="center"
+    >
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_weight="2">
+        android:layout_weight="22">
         <ProgressBar
             android:id="@+id/progressBarCheck"
             style="?android:attr/progressBarStyleLarge"
@@ -18,7 +19,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
+        android:layout_weight="10"
         android:orientation="horizontal">
         <View
             android:layout_width="match_parent"
@@ -40,7 +41,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:paddingTop="10sp">
+                android:paddingTop="10sp"
+                android:paddingLeft="10sp"
+                android:paddingRight="10sp">
                 <TextView
                     android:id="@+id/textViewTableTitle"
                     android:textStyle="bold"
@@ -60,7 +63,7 @@
                 android:paddingTop="1sp">
                 <TextView
                     android:id="@+id/textViewResult"
-                    android:textSize="12sp"
+                    android:textSize="15sp"
                     >
                 </TextView>
             </TableRow>
@@ -83,7 +86,7 @@
                 android:paddingTop="1sp">
                 <TextView
                     android:id="@+id/textViewEmbedded"
-                    android:textSize="12sp"
+                    android:textSize="15sp"
                     >
                 </TextView>
             </TableRow>
@@ -105,7 +108,7 @@
                 android:paddingTop="1sp">
                 <TextView
                     android:id="@+id/textViewExtension"
-                    android:textSize="12sp"
+                    android:textSize="15sp"
                     >
                 </TextView>
             </TableRow>
@@ -121,19 +124,11 @@
             android:layout_weight="3">
         </View>
     </LinearLayout>
-    <TextView
-        android:id="@+id/textViewResponse"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textSize="30dp"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text=""
-        android:textSize="30dp"
-         />
+   <View
+       android:layout_width="match_parent"
+       android:layout_height="match_parent"
+       android:layout_weight="25"
+       />
     <Button
         android:id="@+id/buttonOK"
         android:text="@string/str_button_ok"

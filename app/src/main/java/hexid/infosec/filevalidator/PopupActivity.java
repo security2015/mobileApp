@@ -3,6 +3,7 @@ package hexid.infosec.filevalidator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -18,18 +19,11 @@ public class PopupActivity extends Activity {
                 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         dialogBuilder.setTitle("Suspicous file detected");
-        final EditText input = new EditText(this);
-        input.setSingleLine();
-        input.setText("Caution");
-        dialogBuilder.setView(input);
-        dialogBuilder.setPositiveButton("OK",
+        dialogBuilder.setPositiveButton("Show details",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        if (input.getText().toString().equals(""))
-                            ;
-                        else {
-                            Toast.makeText(PopupActivity.this, input.getText().toString(), Toast.LENGTH_SHORT).show();
-                        }
+                        Intent intent = new Intent(PopupActivity.this, ResultActivity.class);
+                        startActivity(intent);
                         finish();
                     }
                 });

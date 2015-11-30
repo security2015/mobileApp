@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 public class BService extends Service {
@@ -56,9 +57,14 @@ public class BService extends Service {
                 sListFileObserver.remove(this);
             }
             strEvents.append("\tPath : ").append(path).append('(').append(mPath).append(')');
-            Log.i("TestFileObserver",strEvents.toString());
-            if (  event ==  FileObserver.CREATE )
-                ;
+            Log.i("TestFileObserver", strEvents.toString());
+            if (  event ==  FileObserver.CREATE ) {
+                String createdFile="";
+                if ( createdFile.substring(createdFile.lastIndexOf('.'), createdFile.length()).equals("crdownload") )
+                    ;
+                else
+                    ;
+            }
         }
     }
     private void monitorAllFiles(File root) {
@@ -79,7 +85,23 @@ public class BService extends Service {
             if(file.isDirectory()) monitorAllFiles(file);
         }
     }
+/*
+    static ArrayList<String> fileList;
+    static String getCreatedFile () {
+        File f = new File(Environment.getExternalStorageDirectory(), "Downloads");
+        if ( fileList == null ) {
+            fileList = new ArrayList<String>(Arrays.asList(f.list()));
+            return "";
+        }
+        ArrayList<String> downloads = new ArrayList<String>(Arrays.asList(f.list()));
 
+        String createdFile = "";
+        for ( String fileName : downloads )
+            if ( !fileList.contains(fileName))
+                createdFile = fileName;
+        return createdFile;
+    }
+    */
     private void downloadObserved ()  {
         Builder mBuilder = (Builder) new Builder(this).setSmallIcon(R.drawable.search_icon).setContentTitle("CheckEr")
                         .setContentText("File Downloaded");
@@ -110,26 +132,6 @@ public class BService extends Service {
         String downloadPath = Environment.getExternalStorageDirectory()+"/Download";
         // Monitoring file chage
         monitorAllFiles(new File(Environment.getExternalStorageDirectory() + "/Download"));
-
-        Builder mBuilder =
-                (Builder) new Builder(this)
-                        .setSmallIcon(R.drawable.search_icon)
-                        .setContentTitle("CheckEr")
-                        .setContentText("Monitoring");
-        Intent resultIntent = new Intent(this, MainActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addParentStack(ResultActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        0,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        mBuilder.setContentIntent(resultPendingIntent);
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(1, mBuilder.build());
-
         Toast.makeText(this, "Monitoring On", Toast.LENGTH_SHORT).show();
 
         return super.onStartCommand(intent, flags, startId);
