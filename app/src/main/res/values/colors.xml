@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pressed">@color/hexid_gray</color>
+    <color name="unpressed">@color/hexid_orange</color>
+    <color name="hexid_orange">#f05f40</color>
+    <color name="hexid_gray">#5A5A5A</color>
+</resources>

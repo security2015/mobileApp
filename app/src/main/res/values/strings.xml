@@ -1,6 +1,10 @@
 <resources>
-    <string name="app_name">FileValidator</string>
+    <string name="app_name">Checker</string>
 
-    <string name="hello_world">Hello world!</string>
+    <string name="title">CHECKER</string>
+    <string name="exploreButton">EX</string>
+    <string name="checkButton">Check!</string>
     <string name="action_settings">Settings</string>
+    <string name="str_button_ok">OK</string>
+    <string name="title_activity_base">BaseActivity</string>
 </resources>
