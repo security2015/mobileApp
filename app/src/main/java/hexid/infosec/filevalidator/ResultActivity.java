@@ -67,6 +67,7 @@ public class ResultActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 finish();
+                overridePendingTransition(0, 0);
             }
         });
     }
@@ -213,6 +214,12 @@ public class ResultActivity extends BaseActivity {
             Log.e("error", e.toString());
             Toast.makeText(ResultActivity.this, "file not found", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(0, 0);
     }
 
     @Override

@@ -7,7 +7,7 @@
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_weight="22">
+        android:layout_weight="24">
         <ProgressBar
             android:id="@+id/progressBarCheck"
             style="?android:attr/progressBarStyleLarge"
@@ -27,9 +27,9 @@
             android:layout_weight="3">
         </View>
         <View
-            android:layout_width="1sp"
+            android:layout_width="1.5sp"
             android:layout_height="match_parent"
-            android:background="@android:color/holo_orange_dark" >
+            android:background="@color/hexid_orange" >
         </View>
         <TableLayout
             android:layout_width="match_parent"
@@ -63,6 +63,7 @@
                 android:paddingTop="1sp">
                 <TextView
                     android:id="@+id/textViewResult"
+                    android:gravity="center"
                     android:textSize="15sp"
                     >
                 </TextView>
@@ -87,8 +88,9 @@
                 <TextView
                     android:id="@+id/textViewEmbedded"
                     android:textSize="15sp"
-                    android:layout_width="0sp"
+                    android:layout_width="match_parent"
                     android:layout_weight="1"
+                    android:gravity="center"
                     android:singleLine="false"
                     >
                 </TextView>
@@ -112,14 +114,15 @@
                 <TextView
                     android:id="@+id/textViewExtension"
                     android:textSize="15sp"
+                    android:layout_gravity="center"
                     >
                 </TextView>
             </TableRow>
         </TableLayout>
         <View
-            android:layout_width="1sp"
+            android:layout_width="1.5sp"
             android:layout_height="match_parent"
-            android:background="@android:color/holo_orange_dark" >
+            android:background="@color/hexid_orange" >
         </View>
         <View
             android:layout_width="match_parent"
@@ -140,6 +143,6 @@
         android:layout_height="wrap_content"
         android:textStyle="bold"
         android:textColor="@color/switch_thumb_normal_material_light"
-        android:background="@android:color/holo_orange_dark"
+        android:background="@drawable/selector_button"
         />
 </LinearLayout>
