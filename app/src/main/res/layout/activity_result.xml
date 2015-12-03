@@ -7,7 +7,7 @@
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_weight="22">
+        android:layout_weight="24">
         <ProgressBar
             android:id="@+id/progressBarCheck"
             style="?android:attr/progressBarStyleLarge"
@@ -27,9 +27,9 @@
             android:layout_weight="3">
         </View>
         <View
-            android:layout_width="1sp"
+            android:layout_width="1.5sp"
             android:layout_height="match_parent"
-            android:background="@android:color/holo_orange_dark" >
+            android:background="@color/hexid_orange" >
         </View>
         <TableLayout
             android:layout_width="match_parent"
@@ -120,9 +120,9 @@
             </TableRow>
         </TableLayout>
         <View
-            android:layout_width="1sp"
+            android:layout_width="1.5sp"
             android:layout_height="match_parent"
-            android:background="@android:color/holo_orange_dark" >
+            android:background="@color/hexid_orange" >
         </View>
         <View
             android:layout_width="match_parent"
@@ -143,6 +143,6 @@
         android:layout_height="wrap_content"
         android:textStyle="bold"
         android:textColor="@color/switch_thumb_normal_material_light"
-        android:background="@android:color/holo_orange_dark"
+        android:background="@drawable/selector_button"
         />
 </LinearLayout>
